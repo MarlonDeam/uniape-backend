@@ -51,3 +51,10 @@ export async function atualizarImovel(
         .select()
         .single();
 }
+
+export async function excluirImovel(id: number) {
+    return await supabase
+        .from("imovel")
+        .delete()
+        .eq("id", id);
+}

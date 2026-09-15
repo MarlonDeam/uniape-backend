@@ -4,7 +4,8 @@ import {
     buscarImoveis,
     buscarImovelPorId,
     inserirImovel,
-    atualizarImovel
+    atualizarImovel,
+    excluirImovel
 } from "../services/imovel.service";
 
 import { criarImovelSchema } from "../schemas/imovel.schema";
@@ -115,4 +116,24 @@ export async function editarImovel(req: Request, res: Response) {
     }
 
     res.json(data);
+}
+
+export async function deletarImovel(req: Request, res: Response) {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+        return res.status(400).json({
+            error: "ID do imóvel inválido"
+        });
+    }
+
+    const { error } = await excluirImovel(id);
+
+    if (error) {
+        return res.status(500).json({
+            error: error.message
+        });
+    }
+
+    res.status(204).send();
 }
