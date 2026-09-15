@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
+
 import {
     buscarImoveis,
     inserirImovel
 } from "../services/imovel.service";
+
+import { criarImovelSchema } from "../schemas/imovel.schema";
 
 export async function listarImoveis(req: Request, res: Response) {
     const { data, error } = await buscarImoveis();
@@ -17,6 +20,18 @@ export async function listarImoveis(req: Request, res: Response) {
 }
 
 export async function criarImovel(req: Request, res: Response) {
+    const resultado = criarImovelSchema.safeParse(req.body);
+
+    if (!resultado.success) {
+        return res.status(400).json({
+            error: "Dados inválidos",
+            detalhes: resultado.error.issues.map((erro) => ({
+                campo: erro.path[0],
+                mensagem: erro.message
+            }))
+        });
+    }
+
     const {
         proprietario_id,
         titulo,
@@ -26,7 +41,7 @@ export async function criarImovel(req: Request, res: Response) {
         vagas_disponiveis,
         mobiliado,
         disponivel
-    } = req.body;
+    } = resultado.data;
 
     const { data, error } = await inserirImovel({
         proprietario_id,
