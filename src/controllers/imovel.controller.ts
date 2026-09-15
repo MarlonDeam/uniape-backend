@@ -3,7 +3,8 @@ import { Request, Response } from "express";
 import {
     buscarImoveis,
     buscarImovelPorId,
-    inserirImovel
+    inserirImovel,
+    atualizarImovel
 } from "../services/imovel.service";
 
 import { criarImovelSchema } from "../schemas/imovel.schema";
@@ -82,4 +83,36 @@ export async function criarImovel(req: Request, res: Response) {
     }
 
     res.status(201).json(data);
+}
+
+export async function editarImovel(req: Request, res: Response) {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+        return res.status(400).json({
+            error: "ID do imóvel inválido"
+        });
+    }
+
+    const resultado = criarImovelSchema.partial().safeParse(req.body);
+
+    if (!resultado.success) {
+        return res.status(400).json({
+            error: "Dados inválidos",
+            detalhes: resultado.error.issues.map((erro) => ({
+                campo: erro.path[0],
+                mensagem: erro.message
+            }))
+        });
+    }
+
+    const { data, error } = await atualizarImovel(id, resultado.data);
+
+    if (error) {
+        return res.status(404).json({
+            error: "Imóvel não encontrado"
+        });
+    }
+
+    res.json(data);
 }
