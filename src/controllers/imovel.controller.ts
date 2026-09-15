@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import {
     buscarImoveis,
+    buscarImovelPorId,
     inserirImovel
 } from "../services/imovel.service";
 
@@ -13,6 +14,26 @@ export async function listarImoveis(req: Request, res: Response) {
     if (error) {
         return res.status(500).json({
             error: error.message
+        });
+    }
+
+    res.json(data);
+}
+
+export async function listarImovelPorId(req: Request, res: Response) {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+        return res.status(400).json({
+            error: "ID do imóvel inválido"
+        });
+    }
+
+    const { data, error } = await buscarImovelPorId(id);
+
+    if (error) {
+        return res.status(404).json({
+            error: "Imóvel não encontrado"
         });
     }
 
