@@ -3,7 +3,7 @@ import { supabase } from "../config/supabase";
 export async function buscarUsuarios() {
     return await supabase
         .from("usuario")
-        .select("*")
+        .select("id, nome, email, tipo, telefone, media_estrelas, data_cadastro")
         .limit(5);
 }
 
