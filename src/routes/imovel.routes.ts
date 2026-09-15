@@ -1,8 +1,12 @@
 import { Router } from "express";
-import { listarImoveis } from "../controllers/imovel.controller";
+import {
+    listarImoveis,
+    criarImovel
+} from "../controllers/imovel.controller";
 
 const router = Router();
 
 router.get("/", listarImoveis);
+router.post("/", criarImovel);
 
 export default router;
