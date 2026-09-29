@@ -9,6 +9,7 @@ import {
 } from "../services/imovel.service";
 
 import { criarImovelSchema } from "../schemas/imovel.schema";
+import { RequestAutenticado } from "../middlewares/auth.middleware";
 
 export async function listarImoveis(req: Request, res: Response) {
     const { data, error } = await buscarImoveis();
@@ -42,8 +43,13 @@ export async function listarImovelPorId(req: Request, res: Response) {
     res.json(data);
 }
 
-export async function criarImovel(req: Request, res: Response) {
-    const resultado = criarImovelSchema.safeParse(req.body);
+export async function criarImovel(
+    req: RequestAutenticado,
+    res: Response
+) {
+    const resultado = criarImovelSchema
+        .omit({ proprietario_id: true })
+        .safeParse(req.body);
 
     if (!resultado.success) {
         return res.status(400).json({
@@ -55,8 +61,19 @@ export async function criarImovel(req: Request, res: Response) {
         });
     }
 
+    if (!req.usuario) {
+        return res.status(401).json({
+            error: "Usuário não autenticado"
+        });
+    }
+
+    if (req.usuario.tipo !== "proprietario") {
+        return res.status(403).json({
+            error: "Apenas proprietários podem cadastrar imóveis"
+        });
+    }
+
     const {
-        proprietario_id,
         titulo,
         localizacao,
         preco_mensal,
@@ -67,7 +84,7 @@ export async function criarImovel(req: Request, res: Response) {
     } = resultado.data;
 
     const { data, error } = await inserirImovel({
-        proprietario_id,
+        proprietario_id: req.usuario.id,
         titulo,
         localizacao,
         preco_mensal,
@@ -86,7 +103,10 @@ export async function criarImovel(req: Request, res: Response) {
     res.status(201).json(data);
 }
 
-export async function editarImovel(req: Request, res: Response) {
+export async function editarImovel(
+    req: RequestAutenticado,
+    res: Response
+) {
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
@@ -95,7 +115,22 @@ export async function editarImovel(req: Request, res: Response) {
         });
     }
 
-    const resultado = criarImovelSchema.partial().safeParse(req.body);
+    if (!req.usuario) {
+        return res.status(401).json({
+            error: "Usuário não autenticado"
+        });
+    }
+
+    if (req.usuario.tipo !== "proprietario") {
+        return res.status(403).json({
+            error: "Apenas proprietários podem editar imóveis"
+        });
+    }
+
+    const resultado = criarImovelSchema
+        .omit({ proprietario_id: true })
+        .partial()
+        .safeParse(req.body);
 
     if (!resultado.success) {
         return res.status(400).json({
@@ -107,18 +142,25 @@ export async function editarImovel(req: Request, res: Response) {
         });
     }
 
-    const { data, error } = await atualizarImovel(id, resultado.data);
+    const { data, error } = await atualizarImovel(
+        id,
+        req.usuario.id,
+        resultado.data
+    );
 
-    if (error) {
+    if (error || !data) {
         return res.status(404).json({
-            error: "Imóvel não encontrado"
+            error: "Imóvel não encontrado ou não pertence ao usuário"
         });
     }
 
     res.json(data);
 }
 
-export async function deletarImovel(req: Request, res: Response) {
+export async function deletarImovel(
+    req: RequestAutenticado,
+    res: Response
+) {
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
@@ -127,11 +169,32 @@ export async function deletarImovel(req: Request, res: Response) {
         });
     }
 
-    const { error } = await excluirImovel(id);
+    if (!req.usuario) {
+        return res.status(401).json({
+            error: "Usuário não autenticado"
+        });
+    }
+
+    if (req.usuario.tipo !== "proprietario") {
+        return res.status(403).json({
+            error: "Apenas proprietários podem excluir imóveis"
+        });
+    }
+
+    const { data, error } = await excluirImovel(
+        id,
+        req.usuario.id
+    );
 
     if (error) {
         return res.status(500).json({
             error: error.message
+        });
+    }
+
+    if (!data || data.length === 0) {
+        return res.status(404).json({
+            error: "Imóvel não encontrado ou não pertence ao usuário"
         });
     }
 

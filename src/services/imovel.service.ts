@@ -34,6 +34,7 @@ export async function inserirImovel(imovel: {
 
 export async function atualizarImovel(
     id: number,
+    proprietarioId: number,
     imovel: {
         titulo?: string;
         localizacao?: string;
@@ -48,13 +49,20 @@ export async function atualizarImovel(
         .from("imovel")
         .update(imovel)
         .eq("id", id)
+        .eq("proprietario_id", proprietarioId)
         .select()
         .single();
 }
 
-export async function excluirImovel(id: number) {
+export async function excluirImovel(
+    id: number,
+    proprietarioId: number
+) {
     return await supabase
         .from("imovel")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("proprietario_id", proprietarioId)
+        .select()
+        .single();
 }

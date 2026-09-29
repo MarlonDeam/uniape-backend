@@ -8,12 +8,18 @@ import {
     deletarImovel
 } from "../controllers/imovel.controller";
 
+import { autenticar } from "../middlewares/auth.middleware";
+
 const router = Router();
 
 router.get("/", listarImoveis);
+
 router.get("/:id", listarImovelPorId);
-router.post("/", criarImovel);
-router.put("/:id", editarImovel);
-router.delete("/:id", deletarImovel);
+
+router.post("/", autenticar, criarImovel);
+
+router.put("/:id", autenticar, editarImovel);
+
+router.delete("/:id", autenticar, deletarImovel);
 
 export default router;
